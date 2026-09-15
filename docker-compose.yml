@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: corporate-portal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: corporate_portal
+      POSTGRES_USER: corporate_portal
+      POSTGRES_PASSWORD: corporate_portal
+    ports:
+      - "5433:5432"
+    volumes:
+      - corporate_portal_postgres_data:/var/lib/postgresql
+
+volumes:
+  corporate_portal_postgres_data:
