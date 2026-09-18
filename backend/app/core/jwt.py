@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 import jwt
+from fastapi import HTTPException, status
 
 from app.core.config import settings
 
@@ -29,3 +30,25 @@ def create_refresh_token(subject: str) -> str:
         settings.jwt_secret_key,
         algorithm=settings.jwt_algorithm,
     )
+
+
+def decode_access_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.jwt_secret_key,
+            algorithms=[settings.jwt_algorithm],
+        )
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        ) from exc
+
+    if payload.get("type") != "access":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token type",
+        )
+
+    return payload
