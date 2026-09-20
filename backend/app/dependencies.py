@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db_session
 from app.core.jwt import decode_access_token
 from app.models.employee import Employee
+from app.repositories.employee import EmployeeRepository
+from app.services.employee import EmployeeService
 
 security = HTTPBearer()
 
@@ -52,3 +54,18 @@ async def get_current_user(
         )
 
     return employee
+
+
+def get_employee_repository(
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+) -> EmployeeRepository:
+    return EmployeeRepository(session)
+
+
+def get_employee_service(
+    repository: Annotated[
+        EmployeeRepository,
+        Depends(get_employee_repository),
+    ],
+) -> EmployeeService:
+    return EmployeeService(repository)
