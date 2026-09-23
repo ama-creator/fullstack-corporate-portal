@@ -32,3 +32,10 @@ class EmployeeListResponse(BaseModel):
     avatar_url: str | None
     role: EmployeeRole
     is_active: bool
+
+
+class EmployeeListPageResponse(BaseModel):
+    items: list[EmployeeListResponse]
+    total: int
+    limit: int
+    offset: int

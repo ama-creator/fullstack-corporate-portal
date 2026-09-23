@@ -4,7 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.dependencies import get_current_user, get_employee_service
 from app.models.employee import Employee
-from app.schemas.employee import EmployeeListResponse, EmployeeMeResponse
+from app.models.enums import EmployeeRole
+from app.schemas.employee import (
+    EmployeeListPageResponse,
+    EmployeeListResponse,
+    EmployeeMeResponse,
+)
 from app.services.employee import EmployeeService
 
 router = APIRouter(
@@ -37,7 +42,7 @@ async def get_employee(
     return employee
 
 
-@router.get("", response_model=list[EmployeeListResponse])
+@router.get("", response_model=EmployeeListPageResponse)
 async def get_employees(
     service: Annotated[
         EmployeeService,
@@ -56,5 +61,29 @@ async def get_employees(
         default=0,
         ge=0,
     ),
-) -> list[EmployeeListResponse]:
-    return await service.get_all(limit=limit, offset=offset)
+    department_id: int | None = Query(default=None, ge=1),
+    position_id: int | None = Query(default=None, ge=1),
+    role: EmployeeRole | None = Query(default=None),
+    is_active: bool | None = Query(default=None),
+    search: str | None = Query(
+        default=None,
+        min_length=1,
+        max_length=100,
+    ),
+) -> EmployeeListPageResponse:
+    employees, total = await service.get_all(
+        limit=limit,
+        offset=offset,
+        department_id=department_id,
+        position_id=position_id,
+        role=role,
+        is_active=is_active,
+        search=search,
+    )
+
+    return EmployeeListPageResponse(
+        items=employees,
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
