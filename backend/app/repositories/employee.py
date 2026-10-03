@@ -98,3 +98,31 @@ class EmployeeRepository:
         result = await self.session.execute(query)
 
         return result.scalar_one()
+
+    async def get_by_email(self, email: str) -> Employee | None:
+        result = await self.session.execute(
+            select(Employee).where(Employee.email == email)
+        )
+
+        return result.scalar_one_or_none()
+
+    async def create(self, employee: Employee) -> Employee:
+        self.session.add(employee)
+
+        await self.session.commit()
+        await self.session.refresh(employee)
+
+        return employee
+    
+    async def update(
+        self,
+        employee: Employee,
+        data: dict[str, object],
+    ) -> Employee:
+        for field, value in data.items():
+            setattr(employee, field, value)
+    
+        await self.session.commit()
+        await self.session.refresh(employee)
+    
+        return employee

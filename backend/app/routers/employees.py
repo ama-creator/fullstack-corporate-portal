@@ -1,14 +1,20 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from app.dependencies import get_current_user, get_employee_service
+from app.dependencies import (
+    get_current_user,
+    get_employee_service,
+    require_roles,
+)
 from app.models.employee import Employee
 from app.models.enums import EmployeeRole
 from app.schemas.employee import (
+    EmployeeCreate,
     EmployeeListPageResponse,
     EmployeeListResponse,
     EmployeeMeResponse,
+    EmployeeUpdate,
 )
 from app.services.employee import EmployeeService
 
@@ -16,6 +22,30 @@ router = APIRouter(
     prefix="/api/v1/employees",
     tags=["Employees"],
 )
+
+
+@router.post(
+    "",
+    response_model=EmployeeMeResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_employee(
+    data: EmployeeCreate,
+    service: Annotated[
+        EmployeeService,
+        Depends(get_employee_service),
+    ],
+    current_user: Annotated[
+        Employee,
+        Depends(
+            require_roles(
+                EmployeeRole.ADMIN,
+                EmployeeRole.HR,
+            )
+        ),
+    ],
+) -> EmployeeMeResponse:
+    return await service.create(data=data, actor=current_user)
 
 
 @router.get("/me", response_model=EmployeeMeResponse)
@@ -86,4 +116,32 @@ async def get_employees(
         total=total,
         limit=limit,
         offset=offset,
+    )
+
+
+@router.patch(
+    "/{employee_id}",
+    response_model=EmployeeMeResponse,
+)
+async def update_employee(
+    employee_id: int,
+    data: EmployeeUpdate,
+    service: Annotated[
+        EmployeeService,
+        Depends(get_employee_service),
+    ],
+    current_user: Annotated[
+        Employee,
+        Depends(
+            require_roles(
+                EmployeeRole.ADMIN,
+                EmployeeRole.HR,
+            )
+        ),
+    ],
+) -> EmployeeMeResponse:
+    return await service.update(
+        employee_id=employee_id,
+        data=data,
+        actor=current_user,
     )
