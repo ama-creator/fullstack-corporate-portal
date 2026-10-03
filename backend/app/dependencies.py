@@ -8,7 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db_session
 from app.core.jwt import decode_access_token
 from app.models.employee import Employee
+from app.models.enums import EmployeeRole
+from app.repositories.department import DepartmentRepository
 from app.repositories.employee import EmployeeRepository
+from app.repositories.position import PositionRepository
 from app.services.employee import EmployeeService
 
 security = HTTPBearer()
@@ -62,10 +65,32 @@ def get_employee_repository(
     return EmployeeRepository(session)
 
 
-def get_employee_service(
-    repository: Annotated[
-        EmployeeRepository,
-        Depends(get_employee_repository),
+async def get_employee_service(
+    session: Annotated[
+        AsyncSession,
+        Depends(get_db_session),
     ],
 ) -> EmployeeService:
-    return EmployeeService(repository)
+    return EmployeeService(
+        repository=EmployeeRepository(session),
+        department_repository=DepartmentRepository(session),
+        position_repository=PositionRepository(session),
+    )
+
+
+def require_roles(*allowed_roles: EmployeeRole):
+    async def role_checker(
+        current_user: Annotated[
+            Employee,
+            Depends(get_current_user),
+        ],
+    ) -> Employee:
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permissions",
+            )
+
+        return current_user
+
+    return role_checker
