@@ -12,7 +12,9 @@ from app.models.enums import EmployeeRole
 from app.repositories.department import DepartmentRepository
 from app.repositories.employee import EmployeeRepository
 from app.repositories.position import PositionRepository
+from app.services.department import DepartmentService
 from app.services.employee import EmployeeService
+from app.services.position import PositionService
 
 security = HTTPBearer()
 
@@ -94,3 +96,25 @@ def require_roles(*allowed_roles: EmployeeRole):
         return current_user
 
     return role_checker
+
+
+async def get_department_service(
+    session: Annotated[
+        AsyncSession,
+        Depends(get_db_session),
+    ],
+) -> DepartmentService:
+    return DepartmentService(
+        repository=DepartmentRepository(session),
+    )
+
+
+async def get_position_service(
+    session: Annotated[
+        AsyncSession,
+        Depends(get_db_session),
+    ],
+) -> PositionService:
+    return PositionService(
+        repository=PositionRepository(session),
+    )

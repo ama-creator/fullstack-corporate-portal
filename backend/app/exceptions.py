@@ -20,3 +20,11 @@ class EmployeeNotFoundError(Exception):
 
 class SelfModificationError(Exception):
     pass
+
+
+class DepartmentAlreadyExistsError(Exception):
+    pass
+
+
+class PositionAlreadyExistsError(Exception):
+    pass
