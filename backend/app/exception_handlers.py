@@ -2,10 +2,12 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
 from app.exceptions import (
+    DepartmentAlreadyExistsError,
     DepartmentNotFoundError,
     EmployeeAlreadyExistsError,
     EmployeeNotFoundError,
     PermissionDeniedError,
+    PositionAlreadyExistsError,
     PositionNotFoundError,
     SelfModificationError,
 )
@@ -82,5 +84,29 @@ async def self_modification_handler(
                 "Administrator cannot remove their own admin role "
                 "or deactivate their own account"
             ),
+        },
+    )
+
+
+async def department_already_exists_handler(
+    _request: Request,
+    _exc: DepartmentAlreadyExistsError,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "detail": "Department with this name already exists",
+        },
+    )
+
+
+async def position_already_exists_handler(
+    _request: Request,
+    _exc: PositionAlreadyExistsError,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={
+            "detail": "Position with this name already exists",
         },
     )
